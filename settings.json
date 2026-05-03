@@ -1,0 +1,8 @@
+{
+    "colorscheme": "ayu-dark",
+    "cursorstyle": "bar",
+    "mkparents": true,
+    "relativeruler": true,
+    "statusformatl": "$(filename)$(modified)",
+    "statusformatr": ""
+}
