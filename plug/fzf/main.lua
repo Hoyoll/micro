@@ -4,6 +4,7 @@ local config = import("micro/config")
 local buffer = import("micro/buffer")
 local util = import("micro/util")
 local deferred = nil
+
 function fzf(bp)
 	local output, err = shell.RunInteractiveShell("fzf --preview 'bat --color=always --style=numbers --line-range=:50 {}'", false, true)
 	if err ~= nil then
@@ -38,8 +39,8 @@ end
 function rg(bp, args)
 	if args and #args >= 1 then
 	    local query = args[1]
-    	local rg = "rg --line-number --column --no-heading " .. query
-    	local out = shell.RunCommand(rg)
+		local cmd = [[cmd /C rg --json "]] .. query .. [[" | jq -j "select(.type==\"match\") | \"\(.data.path.text):\(.data.line_number):\(.data.submatches[0].start + 1)@\(.data.lines.text)\""]]
+    	local out = shell.RunCommand(cmd)
     	show_text_in_pane(out, bp, query)
     	micro.InfoBar():Message("Results for: "..query)
 	end
@@ -53,29 +54,11 @@ function gt(bp, args)
 		local column = table.remove(argv)
 		go_to = table.remove(argv) .. ":" .. column
 		local file = table.concat(argv, ":")
-		-- if tab_exist(file) then
-		bp:HandleCommand("tabswitch "..file)		
-		-- else
-		-- bp:HandleCommand("tab "..file)		
+		bp:HandleCommand("tab "..file)		
 		-- end
 		deferred = "goto " .. go_to
 	end
 end
-
--- function tab_exist(name)
--- 	local tabs = micro.Tabs()
--- 	for i = 1, #tabs.List do
--- 	    local tab = tabs[i]
--- 	    local buf = tabCurPane()
---             if buf and buf.Name() == name then
---                 return true
---             end
--- 	end
---     -- for _, tab in ipairs() do
---     --     
---     -- end
---     return false
--- end
 
 function onAnyEvent()
 	if deferred ~= nil then
@@ -108,10 +91,11 @@ end
 
 function get_goto(bp)
 	local cursor = bp.Cursor
-	if cursor:HasSelection() then
-		local selected = util.String(cursor:GetSelection())
-		bp:HandleCommand("gt "..selected)
-		micro.InfoBar():Message("Now in: "..selected)
+	local line = util.String(bp.Buf:Line(cursor.Loc.Y))
+	local splitted = split(line, "@")
+	if splitted ~= nil then
+		bp:HandleCommand("gt " .. splitted[1])
+		micro.InfoBar():Message("Now in: "..splitted[1])
 	end
 end
 
@@ -131,6 +115,7 @@ function lf(bp)
 		bp:HandleCommand("tab '".. output .."'")
 	end	
 end
+
 
 function init()
 	-- run fzf
