@@ -5,8 +5,6 @@ local buffer = import("micro/buffer")
 local util = import("micro/util")
 local deferred = nil
 
--- fd . | fzf --bind "enter:accept,left:reload(fd . .. --type d --max-depth 1),right:reload(fd .
--- {})"
 function fzf(bp)
 	local output, err = shell.RunInteractiveShell("fzf --preview 'bat --color=always --style=numbers --line-range=:50 {}'", false, true)
 	if output ~= "" then
@@ -17,7 +15,7 @@ end
 function fzf_output(output, bp)
     local strings = import("strings")
     output = strings.TrimSpace(output)
-	if output ~= "" then 
+	if output ~= "" then		 
 		bp:HandleCommand("st '" .. output .. "'") 
 	end
 end
@@ -25,10 +23,21 @@ end
 function rg(bp, args)
 	if args and #args >= 1 then
 	    local query = args[1]
-		local cmd = [[cmd /C rg --json "]] .. query .. [[" | jq -j "select(.type==\"match\") | \"\(.data.path.text):\(.data.line_number):\(.data.submatches[0].start + 1)@\(.data.lines.text)\""]]
-    	local out = shell.RunCommand(cmd)
-    	show_text_in_pane(out, bp, query)
-    	micro.InfoBar():Message("Results for: "..query)
+	    local cmd = [[cmd /C rg --json "]] .. query ..[[" | jq -r 'select(.type=="match") | "\(.data.path.text)::\(.data.line_number)::\(.data.submatches[0].start + 1)::\(.data.line_number - 1)::\(.data.line_number + 50)"' | fzf --delimiter :: --preview 'bat --style=numbers --color=always {1} --highlight-line {2} --line-range {4}:{5}']]
+		local output, err = shell.RunInteractiveShell(cmd, false, true)
+		if output ~= "" then
+			local strings = import("strings")
+			output = strings.TrimSpace(output)
+			local parsed = split(output, "::")
+			table.remove(parsed)
+			table.remove(parsed)
+			local column = table.remove(parsed)
+			local go_to = ""
+			go_to = table.remove(parsed) .. ":" .. column
+			local file = table.concat(parsed, ":")
+			bp:HandleCommand("st "..file)		
+			deferred = "goto " .. go_to
+		end	
 	end
 end
 -- it's meant to deal with file path with rg format
@@ -41,7 +50,6 @@ function gt(bp, args)
 		go_to = table.remove(argv) .. ":" .. column
 		local file = table.concat(argv, ":")
 		bp:HandleCommand("st "..file)		
-		-- end
 		deferred = "goto " .. go_to
 	end
 end
@@ -152,7 +160,9 @@ function list_tab(bp)
 end
 
 function init()
+	-- idempoten tab mechanism
 	config.MakeCommand("st", smart_tab, config.NoComplete)
+	-- listing active buffers
 	config.MakeCommand("lt", list_tab, config.NoComplete)
 	-- run fzf
     config.MakeCommand("fzf", fzf, config.NoComplete)

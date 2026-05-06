@@ -3,6 +3,6 @@
     "cursorstyle": "bar",
     "mkparents": true,
     "relativeruler": true,
-    "statusformatl": "$(filename)$(modified)",
+    "statusformatl": ":$(filename)$(modified)",
     "statusformatr": "",
 }
