@@ -5,11 +5,11 @@ local buffer = import("micro/buffer")
 local util = import("micro/util")
 local deferred = nil
 
+-- fd . | fzf --bind "enter:accept,left:reload(fd . .. --type d --max-depth 1),right:reload(fd .
+-- {})"
 function fzf(bp)
 	local output, err = shell.RunInteractiveShell("fzf --preview 'bat --color=always --style=numbers --line-range=:50 {}'", false, true)
-	if err ~= nil then
-	    micro.InfoBar():Error(err)
-	else
+	if output ~= "" then
 	    fzf_output(output, bp)
 	end	
 end
@@ -18,22 +18,8 @@ function fzf_output(output, bp)
     local strings = import("strings")
     output = strings.TrimSpace(output)
 	if output ~= "" then 
-		bp:HandleCommand("tab '" .. output .. "'") 
+		bp:HandleCommand("st '" .. output .. "'") 
 	end
-end
-
-function fzf_d(bp)
-	local output, err = shell.RunInteractiveShell("fzf --preview 'bat --color=always --style=numbers --line-range=:50 {}'", false, true)
-    if err ~= nil then
-        micro.InfoBar():Error(err)
-    else
-       local strings = import("strings")
-       output = strings.TrimSpace(output)
-       if output ~= "" then
-       	   os.remove(output)
-       	   micro.InfoBar():Message("Deleted: " .. output)
-       end
-    end
 end
 
 function rg(bp, args)
@@ -54,7 +40,7 @@ function gt(bp, args)
 		local column = table.remove(argv)
 		go_to = table.remove(argv) .. ":" .. column
 		local file = table.concat(argv, ":")
-		bp:HandleCommand("tab "..file)		
+		bp:HandleCommand("st "..file)		
 		-- end
 		deferred = "goto " .. go_to
 	end
@@ -85,10 +71,6 @@ function show_text_in_pane(text, bp, query)
     bp:HSplitIndex(buf, true)
 end
 
-function to_do(bp)
-	bp:HandleCommand("rg TO-DO")
-end
-
 function get_goto(bp)
 	local cursor = bp.Cursor
 	local line = util.String(bp.Buf:Line(cursor.Loc.Y))
@@ -112,12 +94,66 @@ function lf(bp)
 	if output ~= "" then
 		local strings = import("strings")
 		output = strings.TrimSpace(output)
-		bp:HandleCommand("tab '".. output .."'")
+		bp:HandleCommand("st '".. output .."'")
 	end	
 end
 
+function tab_exist(tab_name)
+	for i = 1, #micro.Tabs().List do
+        for j = 1, #micro.Tabs().List[i].Panes do
+            local current_pane = micro.Tabs().List[i].Panes[j]
+            local current_buf = current_pane.Buf
+            if current_buf.Path == tab_name then
+            	return true
+            elseif current_buf.AbsPath == tab_name then
+            	return true
+            end
+        end
+    end
+    return false
+end
+
+function smart_tab(bp, args)
+	if args and #args >= 1 then
+		local tab = args[1]
+		if tab_exist(tab) then
+			bp:HandleCommand("tabswitch '"..tab.."'")
+		else
+			bp:HandleCommand("tab '"..tab.."'")
+		end
+	end	
+end
+
+function list_tab(bp)
+	local buffer_names = ""
+    for i = 1, #micro.Tabs().List do
+        for j = 1, #micro.Tabs().List[i].Panes do
+            local current_pane = micro.Tabs().List[i].Panes[j]
+            local current_buf = current_pane.Buf
+            
+            if current_buf ~= nil then
+                local current_text = ""
+                if current_buf.Path ~= nil and current_buf.Path ~= "" then
+                    current_text = current_buf.Path
+                elseif current_buf.AbsPath ~= nil and current_buf.AbsPath ~= "" then
+                    current_text = current_buf.AbsPath
+                end
+                buffer_names = buffer_names..current_text.."\n"
+            end
+        end
+    end
+	local cmd = [[nu -c "echo ']] .. buffer_names .. [[' | fzf --preview 'bat --color=always --style=numbers --line-range=:50 {}'"]]
+	local output, err = shell.RunInteractiveShell(cmd, false, true)
+	if output ~= "" then
+		local strings = import("strings")
+		output = strings.TrimSpace(output)
+		bp:HandleCommand("st '"..output.."'")
+	end
+end
 
 function init()
+	config.MakeCommand("st", smart_tab, config.NoComplete)
+	config.MakeCommand("lt", list_tab, config.NoComplete)
 	-- run fzf
     config.MakeCommand("fzf", fzf, config.NoComplete)
 	-- run rg
@@ -133,5 +169,4 @@ function init()
 	-- run gt but from selected line
 	config.MakeCommand("get-gt", get_goto, config.NoComplete)
 	-- run rg TO-DO
-	config.MakeCommand("todo!", to_do, config.NoComplete)
 end

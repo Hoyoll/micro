@@ -3,7 +3,7 @@
 	"Alt-l": "command:lf",
 	"Alt-w": "command:jump -5",
 	"Alt-s": "command:jump 5",
-	"Alt-t": "command:todo!",
+	"Alt-t": "command:lt",
 	"Alt-q": "command:get-gt",
 	"Alt-f": "command:dig",
 }
