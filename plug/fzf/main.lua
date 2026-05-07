@@ -23,7 +23,7 @@ end
 function rg(bp, args)
 	if args and #args >= 1 then
 	    local query = args[1]
-	    local cmd = [[cmd /C rg --json --follow . .link "]] .. query ..[[" | jq -r 'select(.type=="match") | "\(.data.path.text)::\(.data.line_number)::\(.data.submatches[0].start + 1)::\(.data.line_number - 1)::\(.data.line_number + 50)"' | fzf --delimiter :: --preview 'bat --style=numbers --color=always {1} --highlight-line {2} --line-range {4}:{5}']]
+	    local cmd = [[cmd /C rg --json "]] .. query ..[[" --follow . .link | jq -r 'select(.type=="match") | "\(.data.path.text)::\(.data.line_number)::\(.data.submatches[0].start + 1)::\(.data.line_number - 1)::\(.data.line_number + 50)"' | fzf --delimiter :: --preview 'bat --style=numbers --color=always {1} --highlight-line {2} --line-range {4}:{5}']]
 		local output, err = shell.RunInteractiveShell(cmd, false, true)
 		if output ~= "" then
 			local strings = import("strings")
