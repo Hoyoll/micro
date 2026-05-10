@@ -35,7 +35,8 @@ function rg(bp, args)
 			local go_to = ""
 			go_to = table.remove(parsed) .. ":" .. column
 			local file = table.concat(parsed, ":")
-			file = file:gsub("^%.\\", "")
+			-- file = file:gsub("^%.\\", "")
+			file = file:gsub("^%.[/\\]", "")   -- remove ./ or .\
 			bp:HandleCommand("st "..file)		
 			deferred = "goto " .. go_to
 		end	
@@ -133,38 +134,9 @@ function smart_tab(bp, args)
 	end	
 end
 
-function list_tab(bp)
-	local buffer_names = ""
-    for i = 1, #micro.Tabs().List do
-        for j = 1, #micro.Tabs().List[i].Panes do
-            local current_pane = micro.Tabs().List[i].Panes[j]
-            local current_buf = current_pane.Buf
-            
-            if current_buf ~= nil then
-                local current_text = ""
-                if current_buf.Path ~= nil and current_buf.Path ~= "" then
-                    current_text = current_buf.Path
-                elseif current_buf.AbsPath ~= nil and current_buf.AbsPath ~= "" then
-                    current_text = current_buf.AbsPath
-                end
-                buffer_names = buffer_names..current_text.."\n"
-            end
-        end
-    end
-	local cmd = [[nu -c "echo ']] .. buffer_names .. [[' | fzf --preview 'bat --color=always --style=numbers --line-range=:50 {}'"]]
-	local output, err = shell.RunInteractiveShell(cmd, false, true)
-	if output ~= "" then
-		local strings = import("strings")
-		output = strings.TrimSpace(output)
-		bp:HandleCommand("st '"..output.."'")
-	end
-end
-
 function init()
 	-- idempoten tab mechanism
 	config.MakeCommand("st", smart_tab, config.NoComplete)
-	-- listing active buffers
-	-- config.MakeCommand("lt", list_tab, config.NoComplete)
 	-- run fzf
     config.MakeCommand("fzf", fzf, config.NoComplete)
 	-- run rg
