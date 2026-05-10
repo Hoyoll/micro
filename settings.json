@@ -4,5 +4,5 @@
     "mkparents": true,
     "relativeruler": true,
     "statusformatl": ":$(filename)$(modified)",
-    "statusformatr": "",
+    "statusformatr": ""
 }

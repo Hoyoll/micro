@@ -1,0 +1,55 @@
+filetype: go
+
+detect:
+    filename: "\\.go$"
+
+rules:
+    # Line comments
+    - comment: 
+        start: "//"
+        end: "$"
+
+    # Block comments
+    - comment:
+        start: "/\\*"
+        end: "\\*/"
+
+    # Double-quoted strings
+    - constant.string:
+        start: "\""
+        end: "\""
+        skip: "\\\\."
+
+    # Raw strings
+    - constant.string:
+        start: "`"
+        end: "`"
+
+    # Character literals
+    - constant.char:
+        start: "'"
+        end: "'"
+        skip: "\\\\."
+
+    # Keywords
+    - statement: "\\b(break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var)\\b"
+
+    # Constants
+    - constant: "(true|false|iota|nil)"
+    - symbol.operator: "(\\+|\\-|\\*|\\/|%|=|:=|==|!=|<|>|<=|>=|&&|\\|\\||!|&|\\||\\^|<<|>>|&\\^|\\+=|\\-=|\\*=|\\/=|%=|&=|\\|=|\\^=|<<=|>>=|:=|<-|\\+\\+|--|\\.)"
+    - symbol.brackets: "(\\{|\\}|\\(|\\)|\\[|\\])"
+
+    # Builtin types
+    - type: "\\b(any|bool|byte|comparable|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr)\\b"
+
+    # Builtin functions
+    - function: "\\b(append|cap|clear|close|complex|copy|delete|imag|len|make|max|min|new|panic|print|println|real|recover)\\b"
+    
+    # Numbers
+    - constant.number: "\\b(0[xX][0-9a-fA-F]+|[0-9]+\\.[0-9]+|[0-9]+)\\b"
+
+    # Function calls
+    - function: "\\b[a-zA-Z_][a-zA-Z0-9_]()\\b"
+
+    # Exported identifiers
+    - type: "\\b[A-Z][a-zA-Z0-9_]*\\b"

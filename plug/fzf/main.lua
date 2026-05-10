@@ -23,7 +23,7 @@ end
 function rg(bp, args)
 	if args and #args >= 1 then
 	    local query = args[1]
-	    local cmd = [[cmd /C rg --json "]] .. query ..[[" --follow . .link | jq -r 'select(.type=="match") | "\(.data.path.text)::\(.data.line_number)::\(.data.submatches[0].start + 1)::\(.data.line_number - 1)::\(.data.line_number + 50)"' | fzf --delimiter :: --preview 'bat --style=numbers --color=always {1} --highlight-line {2} --line-range {4}:{5}']]
+	    local cmd = [[cmd /C rg --json "]] .. query ..[[" --follow . .link | jq -r 'select(.type=="match") | "\(.data.path.text)::\(.data.line_number)::\(.data.submatches[0].start + 1)::\(.data.line_number - 1)::\(.data.line_number + 50)"' | fzf --delimiter :: --preview 'bat --style=numbers --paging=never --color=always {1} --highlight-line {2} --line-range {4}:{5}']]
 		local output, err = shell.RunInteractiveShell(cmd, false, true)
 		if output ~= "" then
 			local strings = import("strings")
@@ -35,6 +35,7 @@ function rg(bp, args)
 			local go_to = ""
 			go_to = table.remove(parsed) .. ":" .. column
 			local file = table.concat(parsed, ":")
+			file = file:gsub("^%.\\", "")
 			bp:HandleCommand("st "..file)		
 			deferred = "goto " .. go_to
 		end	
@@ -163,7 +164,7 @@ function init()
 	-- idempoten tab mechanism
 	config.MakeCommand("st", smart_tab, config.NoComplete)
 	-- listing active buffers
-	config.MakeCommand("lt", list_tab, config.NoComplete)
+	-- config.MakeCommand("lt", list_tab, config.NoComplete)
 	-- run fzf
     config.MakeCommand("fzf", fzf, config.NoComplete)
 	-- run rg
