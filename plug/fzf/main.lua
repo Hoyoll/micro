@@ -15,8 +15,8 @@ end
 function fzf_output(output, bp)
     local strings = import("strings")
     output = strings.TrimSpace(output)
-	if output ~= "" then		 
-		bp:HandleCommand("st '" .. output .. "'") 
+	if output ~= "" then
+		smart_tab(bp, {output})
 	end
 end
 
@@ -35,9 +35,8 @@ function rg(bp, args)
 			local go_to = ""
 			go_to = table.remove(parsed) .. ":" .. column
 			local file = table.concat(parsed, ":")
-			-- file = file:gsub("^%.\\", "")
 			file = file:gsub("^%.[/\\]", "")   -- remove ./ or .\
-			bp:HandleCommand("st "..file)		
+			smart_tab(bp, {file})
 			deferred = "goto " .. go_to
 		end	
 	end
@@ -51,7 +50,7 @@ function gt(bp, args)
 		local column = table.remove(argv)
 		go_to = table.remove(argv) .. ":" .. column
 		local file = table.concat(argv, ":")
-		bp:HandleCommand("st "..file)		
+		smart_tab(bp, {file})
 		deferred = "goto " .. go_to
 	end
 end
@@ -104,7 +103,7 @@ function lf(bp)
 	if output ~= "" then
 		local strings = import("strings")
 		output = strings.TrimSpace(output)
-		bp:HandleCommand("st '".. output .."'")
+		smart_tab(bp, {output})
 	end	
 end
 
